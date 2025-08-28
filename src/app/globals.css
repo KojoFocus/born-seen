@@ -1,26 +1,70 @@
+/* src/app/globals.css */
+
+/* 1) Load Tailwind v4 */
 @import "tailwindcss";
 
+/* 2) Your design tokens + light overrides */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #faf7f5;
+  --ink: #333333;
+  --ash: #666666;
+  --clay: #9c6c4d;
+  --sunset: #d95d39;
+  --radius: 16px;
+  --shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Optional helpers if you still want them */
+.container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* If you keep utility-first Card/Button below, you can delete these: */
+.card {
+  background: #fff;
+  border: 1px solid #eee6e0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 12px;
+}
+.btn-primary {
+  background: var(--clay);
+  color: #fff;
+}
+.btn-primary:hover {
+  filter: brightness(0.96);
+}
+.btn-muted {
+  background: #ede7e2;
+  color: var(--ink);
+}
+.btn-muted:hover {
+  filter: brightness(0.98);
+}
+.hint {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px dashed #e6e1dc;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--ash);
 }

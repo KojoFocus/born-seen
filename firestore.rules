@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // USERS: only admins can read/write
+    match /users/{uid} {
+      allow read, write: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // ROLES: public read, admin write
+    match /roles/{roleId} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // REGISTRATIONS: creator can create/read/update, admins can do anything
+    match /registrations/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.createdBy == request.auth.uid;
+
+      allow read, update: if request.auth != null
+        && (resource.data.createdBy == request.auth.uid
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
+
+      allow delete: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
