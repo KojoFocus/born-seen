@@ -1,6 +1,6 @@
 "use client";
 
-export const prerender = false;
+export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Card } from "@/components/ui";

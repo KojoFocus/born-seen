@@ -1,5 +1,5 @@
 "use client";
-export const prerender = false;
+export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
