@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import Image from "next/image";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  where,
+  type DocumentData,
+} from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Card, Button, Field } from "@/components/ui";
 
@@ -33,16 +41,25 @@ export default function ChampionRecordsPage() {
         return;
       }
 
-      // Fetch this champion's registrations (latest first)
       const qq = query(
         collection(db, "registrations"),
         where("createdBy", "==", user.uid),
         orderBy("createdAt", "desc")
       );
       const snap = await getDocs(qq);
-      const rows: RegDoc[] = snap.docs.map(
-        (d) => ({ id: d.id, ...d.data() } as any)
-      );
+      const rows: RegDoc[] = snap.docs.map((d) => {
+        const data = d.data() as DocumentData;
+        return {
+          id: d.id,
+          childName: data.childName,
+          entryNumber: data.entryNumber,
+          method: data.method,
+          createdAt: data.createdAt,
+          thumbnailDataUrl: data.thumbnailDataUrl ?? null,
+          imageUrl: data.imageUrl ?? null,
+          status: data.status,
+        };
+      });
       setAll(rows);
       setLoading(false);
     };
@@ -83,7 +100,6 @@ export default function ChampionRecordsPage() {
             Search, filter, and open registrations.
           </p>
         </div>
-
         <div className="flex gap-2">
           <Link href="/champion/register">
             <Button>➕ New registration</Button>
@@ -91,7 +107,6 @@ export default function ChampionRecordsPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
         <Card className="flex items-center justify-between">
           <div>
@@ -122,7 +137,6 @@ export default function ChampionRecordsPage() {
         </Card>
       </div>
 
-      {/* Controls */}
       <Card className="mb-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex overflow-hidden rounded-xl border border-[#e6e1dc]">
@@ -157,7 +171,6 @@ export default function ChampionRecordsPage() {
               Scan
             </button>
           </div>
-
           <div className="w-full md:w-80">
             <Field
               label="Search"
@@ -169,7 +182,6 @@ export default function ChampionRecordsPage() {
         </div>
       </Card>
 
-      {/* Grid */}
       {loading ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {[...Array(6)].map((_, i) => (
@@ -209,14 +221,15 @@ export default function ChampionRecordsPage() {
                   )}
                 </div>
 
-                {/** Preview image block (thumbnail or imageUrl) */}
                 {(r.thumbnailDataUrl || r.imageUrl) && (
                   <div className="mb-2 overflow-hidden rounded-xl border border-[#eee6e0]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={r.thumbnailDataUrl || (r.imageUrl as string)}
+                    <Image
+                      src={(r.thumbnailDataUrl || r.imageUrl) as string}
                       alt="preview"
-                      className="max-h-48 w-full object-cover transition group-hover:scale-[1.01]"
+                      width={800}
+                      height={480}
+                      className="h-auto w-full object-cover transition group-hover:scale-[1.01]"
+                      unoptimized
                     />
                   </div>
                 )}

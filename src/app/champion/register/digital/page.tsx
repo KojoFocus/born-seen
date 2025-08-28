@@ -56,8 +56,9 @@ export default function DigitalRegistrationPage() {
         notes: form.notes || null,
       });
       router.push(`/champion/registration/${ref.id}`);
-    } catch (e: any) {
-      setError(e?.message || "Failed to save");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg || "Failed to save");
     } finally {
       setBusy(false);
     }

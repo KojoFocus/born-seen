@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { auth, db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import Tesseract from "tesseract.js";
@@ -14,41 +15,38 @@ export default function Page() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let stream: MediaStream | null = null;
+    const v = videoRef.current;
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
           audio: false,
         });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
+        if (v) {
+          v.srcObject = stream;
+          await v.play();
         }
-      } catch (e: any) {
-        setError(e?.message || "Camera access denied");
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        setError(msg || "Camera access denied");
       }
     })();
     return () => {
-      const tracks = (
-        videoRef.current?.srcObject as MediaStream | null
-      )?.getTracks();
-      tracks?.forEach((t) => t.stop());
+      if (stream) stream.getTracks().forEach((t) => t.stop());
     };
   }, []);
 
   function makeThumbnail(video: HTMLVideoElement): string {
-    // Downscale to keep Firestore doc tiny
     const maxW = 800;
     const ratio = (video.videoWidth || 1) / (video.videoHeight || 1);
     const w = Math.min(maxW, video.videoWidth || maxW);
     const h = Math.round(w / ratio);
-
     const canvas = document.createElement("canvas");
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d")!;
     ctx.drawImage(video, 0, 0, w, h);
-    // Quality 0.5 keeps data URL small; lower if needed
     return canvas.toDataURL("image/jpeg", 0.5);
   }
 
@@ -59,16 +57,13 @@ export default function Page() {
       const video = videoRef.current;
       if (!video) throw new Error("No camera stream");
 
-      // 1) Thumbnail for preview + Firestore
       const dataUrl = makeThumbnail(video);
       setPreview(dataUrl);
 
-      // 2) OCR on the thumbnail
       const blob = await (await fetch(dataUrl)).blob();
       const { data } = await Tesseract.recognize(blob, "eng");
       const ocrText = data.text || "";
 
-      // 3) Extract likely fields
       const find = (rx: RegExp) => {
         const m = ocrText.match(rx);
         return m ? m[1].trim() : undefined;
@@ -91,7 +86,6 @@ export default function Page() {
       const bornWhere = find(/Where\s*Born\s*[:\-]?\s*(.+)/i);
       const informant = find(/Informant\s*[:\-]?\s*(.+)/i);
 
-      // 4) Save ONE Firestore doc (no Storage fields)
       const user = auth.currentUser;
       if (!user) throw new Error("Not signed in");
 
@@ -100,16 +94,10 @@ export default function Page() {
         method: "scan",
         createdAt: serverTimestamp(),
         status: "draft",
-
-        // Storage disabled; keep nulls for compatibility
         imageUrl: null,
         imagePath: null,
-
-        // OCR & optional tiny preview
         ocrText,
-        thumbnailDataUrl: dataUrl, // remove if you want the smallest possible doc
-
-        // Structured fields
+        thumbnailDataUrl: dataUrl,
         entryNumber: entryNumber || null,
         childName: childName || null,
         sex: sex || null,
@@ -127,10 +115,10 @@ export default function Page() {
         informant: informant || null,
       });
 
-      // Go to details page where they can review / edit fields
       router.push(`/champion/registration/${refDoc.id}`);
-    } catch (e: any) {
-      setError(e?.message || "Failed to process image");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg || "Failed to process image");
     } finally {
       setBusy(false);
     }
@@ -139,7 +127,6 @@ export default function Page() {
   return (
     <main className="mx-auto max-w-md p-6">
       <h1 className="mb-4 text-xl font-semibold">Scan Handwritten Form</h1>
-
       <div className="rounded-2xl border p-4">
         <video
           ref={videoRef}
@@ -156,15 +143,19 @@ export default function Page() {
         </button>
 
         {preview && (
-          <img
-            src={preview}
-            alt="preview"
-            className="mt-4 w-full rounded border"
-          />
+          <div className="mt-4 overflow-hidden rounded border">
+            <Image
+              src={preview}
+              alt="preview"
+              width={800}
+              height={500}
+              className="h-auto w-full object-cover"
+              unoptimized
+            />
+          </div>
         )}
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
       </div>
-
       <p className="mt-4 text-sm text-[var(--ash)]">
         Snap → read → save. Your scan and text stay together for easy review.
       </p>

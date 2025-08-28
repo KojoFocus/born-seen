@@ -1,31 +1,41 @@
 "use client";
-import { useEffect, useMemo, useState, FormEvent } from "react";
+
+import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, Button, Field } from "@/components/ui";
 
 type Role = "champion" | "officer" | "admin";
+
 const MAP: Record<Role, { label: string; emoji: string; dest: string }> = {
   champion: { label: "Champion", emoji: "🛡️", dest: "/champion" },
   officer: { label: "Hub Officer", emoji: "🏢", dest: "/officer" },
   admin: { label: "Admin", emoji: "⚙️", dest: "/admin" },
 };
-const isRole = (x: any): x is Role =>
-  ["champion", "officer", "admin"].includes(x);
 
-export default function SignIn() {
+const isRole = (x: unknown): x is Role =>
+  x === "champion" || x === "officer" || x === "admin";
+
+export default function SignInByRole() {
   const params = useParams();
   const router = useRouter();
-  const role = Array.isArray(params.role) ? params.role[0] : params.role;
-  const valid = isRole(role);
-  useEffect(() => {
-    if (!valid) router.replace("/select-role");
-  }, [valid, router]);
-  if (!valid) return null;
-  const meta = useMemo(() => MAP[role], [role]);
+
+  const roleParam = Array.isArray(params.role)
+    ? params.role[0]
+    : (params.role as string | undefined);
+  const valid = isRole(roleParam);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (!valid) router.replace("/select-role");
+  }, [valid, router]);
+
+  if (!valid) return null;
+
+  const meta = MAP[roleParam];
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     router.push(meta.dest);
@@ -61,7 +71,7 @@ export default function SignIn() {
           />
           <Button className="w-full">Continue</Button>
           <div className="hint text-xs">
-            Preview flow: any input will proceed to the {meta.label} dashboard.
+            Preview flow: any input proceeds to the {meta.label} dashboard.
           </div>
         </form>
       </Card>

@@ -1,21 +1,28 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// src/lib/firebase.ts
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBJCE58ktitaoqq2a8rVW0X7yVueC_7Ck0",
-  authDomain: "born-seen.firebaseapp.com",
-  projectId: "born-seen",
-  storageBucket: "born-seen.firebasestorage.app",
-  messagingSenderId: "41987728284",
-  appId: "1:41987728284:web:551893c28fef8af5991e59",
-  measurementId: "G-MCTSGYFYR3",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!, // never hardcode
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+// Firestore with offline persistence (safe to keep; remove if you don’t need it)
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+});
+
+export const auth = getAuth(app);

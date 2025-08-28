@@ -5,8 +5,10 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
+type Role = "champion" | "hub-officer" | "admin";
+
 type Props = {
-  allow: Array<"champion" | "hub-officer" | "admin">;
+  allow: Role[];
   children: React.ReactNode;
   redirectTo?: string; // default /login
 };
@@ -27,9 +29,12 @@ export default function RoleGate({
         return;
       }
       const snap = await getDoc(doc(db, "users", user.uid));
-      const role = snap.exists() ? (snap.data().role as string) : undefined;
-      if (role && allow.includes(role as any)) setOk(true);
-      else {
+      const role = snap.exists()
+        ? (snap.data().role as Role | undefined)
+        : undefined;
+      if (role && allow.includes(role)) {
+        setOk(true);
+      } else {
         setOk(false);
         router.replace("/login");
       }

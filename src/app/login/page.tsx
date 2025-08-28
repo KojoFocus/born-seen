@@ -32,8 +32,9 @@ export default function LoginPage() {
       else if (role === "hub-officer") router.push("/officer");
       else if (role === "admin") router.push("/admin");
       else setError("Unknown role. Contact admin.");
-    } catch (err: any) {
-      setError(err?.message ?? "Login failed");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg ?? "Login failed");
     }
   }
 
