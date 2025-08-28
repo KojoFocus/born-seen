@@ -1,4 +1,7 @@
 "use client";
+
+export const prerender = false;
+
 import Link from "next/link";
 import { Card } from "@/components/ui";
 

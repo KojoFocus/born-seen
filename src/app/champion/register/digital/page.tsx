@@ -1,4 +1,7 @@
 "use client";
+
+export const prerender = false;
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";

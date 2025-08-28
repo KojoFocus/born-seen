@@ -1,4 +1,5 @@
 "use client";
+export const prerender = false;
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
