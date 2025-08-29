@@ -12,9 +12,7 @@ export function Card({
   return (
     <div
       className={[
-        // rounded, border, white bg, soft shadow, padding
         "rounded-2xl border border-[#eee6e0] bg-white p-5",
-        // custom soft shadow inline so it’s consistent
         "shadow-[0_6px_24px_rgba(0,0,0,0.06)]",
         className,
       ].join(" ")}
@@ -27,22 +25,36 @@ export function Card({
 export function Button({
   children,
   variant = "primary",
+  size = "md",
   className = "",
   ...rest
 }: PropsWithChildren<
   {
-    variant?: "primary" | "muted";
+    variant?: "primary" | "muted" | "outline";
+    size?: "md" | "lg";
     className?: string;
   } & React.ButtonHTMLAttributes<HTMLButtonElement>
 >) {
+  const sizes = {
+    md: "px-4 py-2 text-sm",
+    lg: "px-6 py-3 text-base",
+  };
+
+  const variants = {
+    primary: "bg-[var(--clay)] text-white hover:brightness-95",
+    muted: "bg-[#EDE7E2] text-[var(--ink)] hover:brightness-98",
+    outline:
+      "bg-white border border-[var(--clay)] text-[var(--clay)] hover:bg-[var(--clay)] hover:text-white",
+  };
+
   const base =
-    "inline-flex items-center justify-center gap-2 font-semibold px-4 py-2 rounded-xl transition";
-  const styles =
-    variant === "primary"
-      ? "bg-[var(--clay)] text-white hover:brightness-95"
-      : "bg-[#EDE7E2] text-[var(--ink)] hover:brightness-98";
+    "inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition";
+
   return (
-    <button className={[base, styles, className].join(" ")} {...rest}>
+    <button
+      className={[base, sizes[size], variants[variant], className].join(" ")}
+      {...rest}
+    >
       {children}
     </button>
   );

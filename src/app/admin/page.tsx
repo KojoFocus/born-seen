@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, Button, Field } from "@/components/ui";
+import SyncNow from "@/components/SyncNow";
 
 /**
  * Remote-focused districts (Eastern Region, GH)
- * You can add/remove here anytime.
  */
 const REMOTE_DISTRICTS = [
   "Afram Plains North",
@@ -122,8 +122,8 @@ const MOCK_RECENT: RecentRow[] = [
 /** ------------------------------------------------ */
 
 export default function AdminDashboard() {
-  // default to Afram Plains North (you can pick any)
   const [district, setDistrict] = useState<District>("Afram Plains North");
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   const totals = useMemo(() => MOCK_TOTALS_BY_DISTRICT[district], [district]);
   const recent = useMemo(
@@ -161,6 +161,20 @@ export default function AdminDashboard() {
     [totals, district]
   );
 
+  const handleSelectRow = (id: string, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedRows([...selectedRows, id]);
+    } else {
+      setSelectedRows(selectedRows.filter((rowId) => rowId !== id));
+    }
+  };
+
+  const handleApproveSelected = () => {
+    console.log("Approving selected registrations:", selectedRows);
+    // You would add your Firestore logic here to update the status of the selected rows.
+    setSelectedRows([]); // Clear selection after action
+  };
+
   return (
     <main className="max-w-5xl">
       {/* Header */}
@@ -177,11 +191,11 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
+          <SyncNow returnTo="/admin" />
           <Link href="/champion/records">
-            <Button variant="muted">📑 View all records</Button>
-          </Link>
-          <Link href="/champion/register">
-            <Button>➕ New registration</Button>
+            <Button size="lg" variant="muted">
+              📑 View all records
+            </Button>
           </Link>
         </div>
       </div>
@@ -208,8 +222,6 @@ export default function AdminDashboard() {
               ))}
             </div>
           </div>
-
-          {/* Quick find (UI only; wire to search if needed) */}
           <div className="md:justify-self-end">
             <Field label="Quick find" placeholder="Name / Entry No. / ID" />
           </div>
@@ -271,7 +283,7 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Recent activity (scoped to district) */}
+      {/* Recent activity */}
       <Card className="mt-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
@@ -286,49 +298,79 @@ export default function AdminDashboard() {
         </div>
 
         <div className="overflow-hidden rounded-xl border border-[#eee6e0]">
-          <table className="w-full border-separate border-spacing-0 text-sm">
-            <thead>
-              <tr className="[&>th]:bg-neutral-50 [&>th]:p-3 [&>th]:text-left [&>th]:text-[var(--ash)]">
-                <th className="rounded-tl-xl">ID</th>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th className="rounded-tr-xl">When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((r, i, arr) => (
-                <tr
-                  key={r.id}
-                  className="[&>td]:p-3 [&>td]:align-top hover:bg-neutral-50"
-                >
-                  <td className="font-mono text-xs text-[var(--ash)]">
-                    {r.id}
-                  </td>
-                  <td className="font-medium">{r.title}</td>
-                  <td className="text-[var(--ash)]">{r.kind}</td>
-                  <td>
-                    <span
-                      className={[
-                        "rounded-full px-3 py-1 text-xs",
-                        r.status === "Approved" &&
-                          "bg-emerald-50 text-emerald-700",
-                        r.status === "Pending" && "bg-amber-50 text-amber-700",
-                        r.status === "Flagged" && "bg-red-50 text-red-700",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      {r.status}
-                    </span>
-                  </td>
-                  <td className={i === arr.length - 1 ? "rounded-br-xl" : ""}>
-                    {r.when}
-                  </td>
+          {recent.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">
+              No recent activity found for this district.
+            </div>
+          ) : (
+            <table className="w-full border-separate border-spacing-0 text-sm">
+              <thead>
+                <tr className="[&>th]:bg-neutral-50 [&>th]:p-3 [&>th]:text-left [&>th]:text-[var(--ash)]">
+                  <th>
+                    <input type="checkbox" className="form-checkbox" />
+                  </th>
+                  <th className="rounded-tl-xl">ID</th>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th className="rounded-tr-xl">When</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recent.map((r, i, arr) => (
+                  <tr
+                    key={r.id}
+                    className="[&>td]:p-3 [&>td]:align-top hover:bg-neutral-50"
+                  >
+                    <td>
+                      <input
+                        type="checkbox"
+                        className="form-checkbox"
+                        checked={selectedRows.includes(r.id)}
+                        onChange={(e) =>
+                          handleSelectRow(r.id, e.target.checked)
+                        }
+                      />
+                    </td>
+                    <td className="font-mono text-xs text-[var(--ash)]">
+                      {r.id}
+                    </td>
+                    <td className="font-medium">{r.title}</td>
+                    <td className="text-[var(--ash)]">{r.kind}</td>
+                    <td>
+                      <span
+                        className={[
+                          "rounded-full px-3 py-1 text-xs",
+                          r.status === "Approved" &&
+                            "bg-emerald-50 text-emerald-700",
+                          r.status === "Pending" &&
+                            "bg-amber-50 text-amber-700",
+                          r.status === "Flagged" && "bg-red-50 text-red-700",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className={i === arr.length - 1 ? "rounded-br-xl" : ""}>
+                      {r.when}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            onClick={handleApproveSelected}
+            disabled={selectedRows.length === 0}
+          >
+            Approve selected
+          </Button>
+          <Button variant="muted">Request info</Button>
+          <Button variant="outline">Export CSV</Button>
         </div>
       </Card>
     </main>

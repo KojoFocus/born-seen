@@ -281,3 +281,7 @@ body {
     animation: none !important;
   }
 }
+/* optional: smoother spinner speed */
+.animate-spin {
+  animation-duration: 900ms !important;
+}

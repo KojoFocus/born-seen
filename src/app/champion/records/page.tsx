@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Card, Button, Field } from "@/components/ui";
+import SyncNow from "@/components/SyncNow";
 
 type RegDoc = {
   id: string;
@@ -41,7 +42,6 @@ export default function ChampionRecordsPage() {
         setLoading(false);
         return;
       }
-
       const qq = query(
         collection(db, "registrations"),
         where("createdBy", "==", user.uid),
@@ -102,12 +102,14 @@ export default function ChampionRecordsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <SyncNow returnTo="/champion/records" />
           <Link href="/champion/register">
             <Button>➕ New registration</Button>
           </Link>
         </div>
       </div>
 
+      {/* Stats */}
       <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
         <Card className="flex items-center justify-between">
           <div>
@@ -138,6 +140,7 @@ export default function ChampionRecordsPage() {
         </Card>
       </div>
 
+      {/* Controls */}
       <Card className="mb-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex overflow-hidden rounded-xl border border-[#e6e1dc]">
@@ -183,6 +186,7 @@ export default function ChampionRecordsPage() {
         </div>
       </Card>
 
+      {/* Grid */}
       {loading ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {[...Array(6)].map((_, i) => (
