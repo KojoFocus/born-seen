@@ -1,11 +1,14 @@
 "use client";
 
+export const dynamic = "force-dynamic"; // avoid prerender/static export
+
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Page() {
+function SyncContent() {
   const [stage, setStage] = useState<"working" | "done">("working");
-  const params = useSearchParams();
+  const params = useSearchParams(); // inside Suspense
   const router = useRouter();
   const from = params.get("from") || "/";
 
@@ -55,9 +58,23 @@ export default function Page() {
         </button>
       </div>
 
-      {/* <p className="mt-4 text-xs text-[var(--ash)]">
+      <p className="mt-4 text-xs text-[var(--ash)]">
         This is a visual preview—no data is synced yet.
-      </p> */}
+      </p>
     </main>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex h-dvh items-center justify-center bg-[var(--sand)]">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--clay)] border-r-transparent" />
+        </main>
+      }
+    >
+      <SyncContent />
+    </Suspense>
   );
 }
