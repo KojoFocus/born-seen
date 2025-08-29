@@ -1,25 +1,31 @@
 "use client";
 
-export const dynamic = "force-dynamic"; // avoid prerender/static export
+export const dynamic = "force-dynamic"; // ensure CSR, no prerender
 
-import { Suspense } from "react";
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
-function SyncContent() {
+export default function Page() {
   const [stage, setStage] = useState<"working" | "done">("working");
-  const params = useSearchParams(); // inside Suspense
+  const fromRef = useRef<string>("/");
   const router = useRouter();
-  const from = params.get("from") || "/";
+
+  // Read ?from=… from the browser (no useSearchParams)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      fromRef.current = sp.get("from") || "/";
+    }
+  }, []);
 
   useEffect(() => {
     const t1 = setTimeout(() => setStage("done"), 2000); // fake sync
-    const t2 = setTimeout(() => router.push(from), 3300); // auto-return
+    const t2 = setTimeout(() => router.push(fromRef.current), 3300); // auto-return
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [router, from]);
+  }, [router]);
 
   return (
     <main className="flex h-dvh flex-col items-center justify-center bg-[var(--sand)] px-6 text-center">
@@ -50,7 +56,7 @@ function SyncContent() {
         </p>
 
         <button
-          onClick={() => router.push(from)}
+          onClick={() => router.push(fromRef.current)}
           className="mt-6 w-full rounded-lg bg-[var(--clay)] px-4 py-2 text-white hover:opacity-90"
           type="button"
         >
@@ -62,19 +68,5 @@ function SyncContent() {
         This is a visual preview—no data is synced yet.
       </p>
     </main>
-  );
-}
-
-export default function Page() {
-  return (
-    <Suspense
-      fallback={
-        <main className="flex h-dvh items-center justify-center bg-[var(--sand)]">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--clay)] border-r-transparent" />
-        </main>
-      }
-    >
-      <SyncContent />
-    </Suspense>
   );
 }
