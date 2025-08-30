@@ -27,6 +27,58 @@ type RegDoc = {
   status?: string;
 };
 
+// ---- MOCKS: shown when not signed in OR when Firestore returns zero rows ----
+const MOCK_RECORDS: RegDoc[] = [
+  {
+    id: "R-20541",
+    childName: "Ama Boateng",
+    entryNumber: "APN-0010421",
+    method: "digital",
+    status: "Approved",
+    thumbnailDataUrl: null,
+  },
+  {
+    id: "R-20540",
+    childName: "Kojo Mensah",
+    entryNumber: "APS-0010420",
+    method: "scan",
+    status: "Pending",
+    thumbnailDataUrl: null,
+  },
+  {
+    id: "R-20539",
+    childName: "Efua Adjei",
+    entryNumber: "FAN-0010419",
+    method: "digital",
+    status: "Flagged",
+    thumbnailDataUrl: null,
+  },
+  {
+    id: "R-20538",
+    childName: "Yaw Owusu",
+    entryNumber: "BN-0010418",
+    method: "scan",
+    status: "Approved",
+    thumbnailDataUrl: null,
+  },
+  {
+    id: "R-20537",
+    childName: "Abena Mensima",
+    entryNumber: "AKY-0010417",
+    method: "digital",
+    status: "Approved",
+    thumbnailDataUrl: null,
+  },
+  {
+    id: "R-20536",
+    childName: "Kwaku Antwi",
+    entryNumber: "KES-0010416",
+    method: "scan",
+    status: "Pending",
+    thumbnailDataUrl: null,
+  },
+];
+
 export default function ChampionRecordsPage() {
   const [all, setAll] = useState<RegDoc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,33 +88,44 @@ export default function ChampionRecordsPage() {
   useEffect(() => {
     const run = async () => {
       setLoading(true);
+
+      // If no auth user, show mock data immediately
       const user = auth.currentUser;
       if (!user) {
-        setAll([]);
+        setAll(MOCK_RECORDS);
         setLoading(false);
         return;
       }
-      const qq = query(
-        collection(db, "registrations"),
-        where("createdBy", "==", user.uid),
-        orderBy("createdAt", "desc")
-      );
-      const snap = await getDocs(qq);
-      const rows: RegDoc[] = snap.docs.map((d) => {
-        const data = d.data() as DocumentData;
-        return {
-          id: d.id,
-          childName: data.childName,
-          entryNumber: data.entryNumber,
-          method: data.method,
-          createdAt: data.createdAt,
-          thumbnailDataUrl: data.thumbnailDataUrl ?? null,
-          imageUrl: data.imageUrl ?? null,
-          status: data.status,
-        };
-      });
-      setAll(rows);
-      setLoading(false);
+
+      try {
+        const qq = query(
+          collection(db, "registrations"),
+          where("createdBy", "==", user.uid),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(qq);
+        const rows: RegDoc[] = snap.docs.map((d) => {
+          const data = d.data() as DocumentData;
+          return {
+            id: d.id,
+            childName: data.childName,
+            entryNumber: data.entryNumber,
+            method: data.method,
+            createdAt: data.createdAt,
+            thumbnailDataUrl: data.thumbnailDataUrl ?? null,
+            imageUrl: data.imageUrl ?? null,
+            status: data.status,
+          };
+        });
+
+        // If Firestore has nothing, fall back to mocks
+        setAll(rows.length > 0 ? rows : MOCK_RECORDS);
+      } catch {
+        // If the query fails (e.g., envs missing in preview), fall back to mocks
+        setAll(MOCK_RECORDS);
+      } finally {
+        setLoading(false);
+      }
     };
     run();
   }, []);
